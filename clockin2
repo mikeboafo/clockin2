@@ -1,0 +1,52 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <curl>
+
+
+#define API_ENDPOINT "https://sheets.googleapis.com/v4/spreadsheets/{SPREADSHEET_ID}/values/Sheet1?key={API_KEY}"
+
+size_t send_data_to_google_sheets(const char *data, size_t size, size_t nmemb, void *userdata) {
+    
+    printf("Data sent to Google Sheets API: %s\n", data);
+
+    return size * nmemb;
+}
+
+
+void add_name_to_google_sheets(const char *name) {
+    CURL *curl = curl_easy_init();
+
+    if (curl) {
+        
+        char json_payload[256];
+        snprintf(json_payload, sizeof(json_payload), "{\"values\": [[\"%s\"]]}", name);
+
+    
+        curl_easy_setopt(curl, CURLOPT_URL, API_ENDPOINT);
+        curl_easy_setopt(curl, CURLOPT_POST, 1L);
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json_payload);
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, send_data_to_google_sheets);
+
+        CURLcode res = curl_easy_perform(curl);
+
+    
+        if (res != CURLE_OK) {
+            fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+        }
+
+        curl_easy_cleanup(curl);
+    }
+}
+
+int main() {
+   
+    char name[100];
+    printf("Enter a name: ");
+    scanf("%s", name);
+
+
+    add_name_to_google_sheets(name);
+
+    return 0;
+}
